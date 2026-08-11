@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --color-ink: #14110f;
+  --color-ivory: #fbf7f0;
+  --color-plum: #4a1942;
+  --color-gold: #c9a24b;
+  --color-sage: #4b6b53;
+
+  --background: var(--color-ivory);
+  --foreground: var(--color-ink);
+}
+
+@theme inline {
+  --color-ink: var(--color-ink);
+  --color-ivory: var(--color-ivory);
+  --color-plum: var(--color-plum);
+  --color-gold: var(--color-gold);
+  --color-sage: var(--color-sage);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+@layer utilities {
+  /* Perforated edge -- the invitation/ticket-stub motif used across cards */
+  .perforated-bottom {
+    position: relative;
+  }
+  .perforated-bottom::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background-image: radial-gradient(
+      circle,
+      var(--color-ivory) 1.5px,
+      transparent 1.6px
+    );
+    background-size: 12px 3px;
+    background-repeat: repeat-x;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
