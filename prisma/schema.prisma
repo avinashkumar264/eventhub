@@ -40,6 +40,15 @@ enum FreelancerSpecialty {
   OTHER
 }
 
+enum EventStatus {
+  DRAFT
+  OPEN
+  QUOTATIONS_RECEIVED
+  BOOKED
+  COMPLETED
+  CANCELLED
+}
+
 enum EventRequestStatus {
   OPEN
   MATCHED
@@ -199,23 +208,44 @@ model Service {
 // ---------------------------------------------------------------------------
 
 model Event {
-  id         String   @id @default(cuid())
-  customerId String
-  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  title      String
-  eventType  String // e.g. "Wedding", "Birthday", "Corporate"
-  eventDate  DateTime
-  city       String?
-  guestCount Int?
-  budgetMin  Decimal? @db.Decimal(10, 2)
-  budgetMax  Decimal? @db.Decimal(10, 2)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String      @id @default(cuid())
+  customerId   String
+  customer     User        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title        String
+  eventType    String // e.g. "Wedding", "Birthday", "Corporate"
+  eventDate    DateTime
+  startTime    String? // "HH:mm"
+  endTime      String? // "HH:mm"
+  city         String?
+  venueType    String?
+  guestCount   Int?
+  budgetMin    Decimal?    @db.Decimal(10, 2)
+  budgetMax    Decimal?    @db.Decimal(10, 2)
+  description  String?
+  requirements String?
+  status       EventStatus @default(DRAFT)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   eventRequests EventRequest[]
   bookings      Booking[]
+  media         EventMedia[]
 
   @@index([customerId])
+  @@index([status])
+}
+
+// Architecture only today — no upload provider wired up yet. Ready for a
+// real storage provider (e.g. S3/Cloudinary) to write rows here later.
+model EventMedia {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
 }
 
 // A customer's request for a specific service category on an event.
