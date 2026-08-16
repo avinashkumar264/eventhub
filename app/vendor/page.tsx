@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth/authorize";
-import { RoleAreaPlaceholder } from "@/components/shared/role-area-placeholder";
+import { ProviderDashboard } from "@/components/provider/provider-dashboard";
 
-export default async function VendorPage() {
+export default async function VendorDashboardPage() {
   const session = await requireRole(["VENDOR"]);
-  return <RoleAreaPlaceholder session={session} />;
+  return <ProviderDashboard session={session} areaPath="vendor" areaLabel="Vendor" />;
 }

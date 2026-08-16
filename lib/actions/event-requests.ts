@@ -48,14 +48,37 @@ export async function createEventRequest(
       };
     }
 
-    await prisma.eventRequest.create({
+    const request = await prisma.eventRequest.create({
       data: {
         eventId: event.id,
         customerId: session.sub,
         category,
         description: description || null,
       },
+      select: { id: true },
     });
+
+    // Eligible providers = any provider with an active service in this
+    // category. This is the whole Day 5 matching rule — no subscription
+    // gating or scoring today; every eligible provider gets the lead.
+    const eligibleProviders = await prisma.provider.findMany({
+      where: {
+        services: {
+          some: { category: { equals: category, mode: "insensitive" }, active: true },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (eligibleProviders.length > 0) {
+      await prisma.lead.createMany({
+        data: eligibleProviders.map((provider) => ({
+          eventRequestId: request.id,
+          providerId: provider.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
   } catch (err) {
     console.error("Create event request error:", err);
     return { error: "Something went wrong. Please try again." };

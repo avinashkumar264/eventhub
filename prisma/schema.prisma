@@ -166,6 +166,7 @@ model Provider {
   businessName        String
   bio                 String?
   city                String?
+  experienceYears     Int?
   verified            Boolean              @default(false)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -176,9 +177,23 @@ model Provider {
   bookings      Booking[]
   reviews       Review[]
   subscriptions Subscription[]
+  media         ProviderMedia[]
 
   @@index([type])
   @@index([verified])
+}
+
+// Portfolio/gallery foundation — architecture only, same pattern as
+// EventMedia. No upload provider wired up yet.
+model ProviderMedia {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  url        String
+  caption    String?
+  createdAt  DateTime @default(now())
+
+  @@index([providerId])
 }
 
 // ---------------------------------------------------------------------------
@@ -281,6 +296,7 @@ model Lead {
   providerId     String
   provider       Provider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
   status         LeadStatus   @default(NEW)
+  viewedAt       DateTime? // set when the provider first opens the lead
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
