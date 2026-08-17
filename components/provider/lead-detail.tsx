@@ -72,6 +72,18 @@ export async function ProviderLeadDetail({
 
   if (!lead) notFound();
 
+  const quotation = await prisma.quotation.findFirst({
+    where: { leadId: lead.id },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      finalAmount: true,
+      status: true,
+      createdAt: true,
+    },
+  });
+
   if (!lead.viewedAt) {
     await markLeadViewed(lead.id);
   }
@@ -151,6 +163,30 @@ export async function ProviderLeadDetail({
           </p>
         </div>
       )}
+
+      <div className="mt-10 border-t border-ink/10 pt-6">
+        <h2 className="font-display text-lg font-medium">Quotation</h2>
+        {quotation ? (
+          <div className="mt-3 rounded-lg border border-ink/10 bg-white px-4 py-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">{quotation.title}</p>
+              <span className="text-xs uppercase tracking-wide text-ink/45">
+                {quotation.status}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-ink/60">
+              ${Number(quotation.finalAmount).toLocaleString()}
+            </p>
+          </div>
+        ) : (
+          <Link
+            href={`/${areaPath}/leads/${lead.id}/quote`}
+            className="mt-3 inline-block text-sm text-plum underline underline-offset-4"
+          >
+            Create quotation
+          </Link>
+        )}
+      </div>
 
       <div className="mt-10 border-t border-ink/10 pt-6">
         <LeadStatusForm action={boundUpdateStatus} currentStatus={lead.status} />

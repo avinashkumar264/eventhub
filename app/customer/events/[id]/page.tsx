@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/authorize";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/customer/status-badge";
+import { QuotationStatusBadge } from "@/components/customer/quotation-status-badge";
 import { EventRequestForm } from "@/components/customer/event-request-form";
 import { createEventRequest } from "@/lib/actions/event-requests";
 
@@ -46,7 +47,18 @@ export default async function EventDetailPage({
   const requests = await prisma.eventRequest.findMany({
     where: { eventId: event.id },
     orderBy: { createdAt: "asc" },
+    include: { _count: { select: { quotations: true } } },
   });
+
+  const latestQuotation = await prisma.quotation.findFirst({
+    where: { eventRequest: { eventId: event.id } },
+    orderBy: { createdAt: "desc" },
+    select: { status: true },
+  });
+  const totalQuotations = requests.reduce(
+    (sum, r) => sum + r._count.quotations,
+    0
+  );
 
   const boundCreateRequest = createEventRequest.bind(null, event.id);
 
@@ -68,6 +80,28 @@ export default async function EventDetailPage({
         </div>
         <StatusBadge status={event.status} />
       </div>
+
+      {totalQuotations > 0 && (
+        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-lg border border-ink/10 bg-white px-4 py-3">
+          <p className="text-sm">
+            <span className="font-medium">{totalQuotations}</span> quotation
+            {totalQuotations === 1 ? "" : "s"} received
+            {latestQuotation && (
+              <>
+                {" "}
+                &middot; latest:{" "}
+                <QuotationStatusBadge status={latestQuotation.status} />
+              </>
+            )}
+          </p>
+          <Link
+            href="/customer/quotations"
+            className="text-sm text-plum underline underline-offset-4"
+          >
+            View quotations
+          </Link>
+        </div>
+      )}
 
       <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-3">
         <div>
@@ -148,6 +182,15 @@ export default async function EventDetailPage({
                     <p className="mt-0.5 text-sm text-ink/55">
                       {request.description}
                     </p>
+                  )}
+                  {request._count.quotations > 0 && (
+                    <Link
+                      href={`/customer/event-requests/${request.id}/quotations`}
+                      className="mt-1 inline-block text-xs text-plum underline underline-offset-4"
+                    >
+                      {request._count.quotations} quotation
+                      {request._count.quotations === 1 ? "" : "s"} — compare
+                    </Link>
                   )}
                 </div>
                 <span className="text-xs uppercase tracking-wide text-ink/45">

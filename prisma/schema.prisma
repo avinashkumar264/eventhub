@@ -66,10 +66,11 @@ enum LeadStatus {
 
 enum QuotationStatus {
   DRAFT
-  SENT
-  ACCEPTED
-  DECLINED
+  SUBMITTED
   EXPIRED
+  WITHDRAWN
+  ACCEPTED
+  REJECTED
 }
 
 enum BookingStatus {
@@ -308,24 +309,31 @@ model Lead {
 }
 
 model Quotation {
-  id             String          @id @default(cuid())
-  leadId         String?
-  lead           Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  eventRequestId String
-  eventRequest   EventRequest    @relation(fields: [eventRequestId], references: [id], onDelete: Cascade)
-  providerId     String
-  provider       Provider        @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  amount         Decimal         @db.Decimal(10, 2)
-  currency       String          @default("INR")
-  notes          String?
-  validUntil     DateTime?
-  status         QuotationStatus @default(DRAFT)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id                String          @id @default(cuid())
+  leadId            String?
+  lead              Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  eventRequestId    String
+  eventRequest      EventRequest    @relation(fields: [eventRequestId], references: [id], onDelete: Cascade)
+  providerId        String
+  provider          Provider        @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  baseAmount        Decimal         @db.Decimal(10, 2)
+  additionalCharges Decimal         @default(0) @db.Decimal(10, 2)
+  discount          Decimal         @default(0) @db.Decimal(10, 2)
+  tax               Decimal         @default(0) @db.Decimal(10, 2)
+  finalAmount       Decimal         @db.Decimal(10, 2) // baseAmount + additionalCharges - discount + tax — always computed server-side
+  details           String? // estimated delivery / logistics notes
+  currency          String          @default("INR")
+  validUntil        DateTime?
+  status            QuotationStatus @default(DRAFT)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   booking Booking?
 
   @@index([providerId])
+  @@index([eventRequestId])
   @@index([status])
 }
 
