@@ -367,19 +367,22 @@ model Booking {
 // ---------------------------------------------------------------------------
 
 model Payment {
-  id             String        @id @default(cuid())
-  bookingId      String
-  booking        Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  payerId        String
-  payer          User          @relation(fields: [payerId], references: [id], onDelete: Restrict)
-  type           PaymentType
-  status         PaymentStatus @default(PENDING)
-  amount         Decimal       @db.Decimal(10, 2)
-  method         String?
-  transactionRef String?
-  verifiedAt     DateTime? // set once verified — this is what flips a conversation to DIRECT
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  bookingId         String
+  booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  payerId           String
+  payer             User          @relation(fields: [payerId], references: [id], onDelete: Restrict)
+  type              PaymentType
+  status            PaymentStatus @default(PENDING)
+  amount            Decimal       @db.Decimal(10, 2)
+  method             String?
+  transactionRef    String?
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?       @unique
+  razorpaySignature String?
+  verifiedAt        DateTime? // set once verified — this is what flips a conversation to DIRECT
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([bookingId])
   @@index([status])

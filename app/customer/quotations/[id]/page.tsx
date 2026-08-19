@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth/authorize";
 import { prisma } from "@/lib/prisma";
 import { QuotationStatusBadge } from "@/components/customer/quotation-status-badge";
+import { AcceptQuotationButton } from "@/components/customer/accept-quotation-button";
+import { CreateBookingButton } from "@/components/customer/create-booking-button";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -43,6 +45,14 @@ export default async function CustomerQuotationDetailPage({
   });
 
   if (!quotation) notFound();
+
+  const existingBooking =
+    quotation.status === "ACCEPTED"
+      ? await prisma.booking.findUnique({
+          where: { quotationId: quotation.id },
+          select: { id: true },
+        })
+      : null;
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -131,6 +141,23 @@ export default async function CustomerQuotationDetailPage({
         Direct contact with the provider unlocks after a verified advance
         payment. EventHub handles communication until then.
       </p>
+
+      <div className="mt-8">
+        {quotation.status === "SUBMITTED" && (
+          <AcceptQuotationButton quotationId={quotation.id} />
+        )}
+        {quotation.status === "ACCEPTED" && !existingBooking && (
+          <CreateBookingButton quotationId={quotation.id} />
+        )}
+        {quotation.status === "ACCEPTED" && existingBooking && (
+          <Link
+            href={`/customer/bookings/${existingBooking.id}`}
+            className="text-sm text-plum underline underline-offset-4"
+          >
+            View booking
+          </Link>
+        )}
+      </div>
 
       <Link
         href={`/customer/event-requests/${quotation.eventRequest.id}/quotations`}

@@ -83,3 +83,39 @@ export async function createQuotation(
   revalidatePath(`/${areaPath}/leads/${leadId}`);
   redirect(`/${areaPath}/leads/${leadId}`);
 }
+
+export interface AcceptQuotationState {
+  error?: string;
+}
+
+/**
+ * Customer accepts a SUBMITTED quotation on one of their own event
+ * requests. Ownership is enforced via eventRequest.customerId in the
+ * WHERE clause — a quotation on another customer's request matches
+ * zero rows and is never touched.
+ */
+export async function acceptQuotation(
+  quotationId: string
+): Promise<AcceptQuotationState> {
+  const session = await requireRole(["CUSTOMER"]);
+
+  const result = await prisma.quotation.updateMany({
+    where: {
+      id: quotationId,
+      status: "SUBMITTED",
+      eventRequest: { customerId: session.sub },
+    },
+    data: { status: "ACCEPTED" },
+  });
+
+  if (result.count === 0) {
+    return {
+      error:
+        "This quotation can't be accepted (not found, not yours, or no longer submitted).",
+    };
+  }
+
+  revalidatePath(`/customer/quotations/${quotationId}`);
+  revalidatePath("/customer/quotations");
+  return {};
+}
